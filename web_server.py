@@ -8,7 +8,6 @@ web server 程序
 from socket import *
 from select import select
 import re
-ADDR=(('0.0.0.0',8888))
 #搭建并发io模型，实现http协议
 class WebSever:
     def __init__(self,host='0.0.0.0',port=80,
@@ -59,15 +58,34 @@ class WebSever:
             #没有匹配到内容断开连接
             connfd.close
             self.rlist.remove(connfd)
+    def send_html(self,connfd,info):
+        if info=="/":
+            filename=self.html+"/index.html"
+        else:
+            filename=self.html+info
+        try:
+            #请求里面有图片
+            f=open(filename,"rb")
+        except:
+            #文件不存在
+            response = "HTTP/1.1 404 Not Found\r\n"
+            response += "Content-Type:text/html\r\n"
+            response += "\r\n"
+            response += "<h1>Sorry...<\h1>"
+            response = response.encode()
+        else:
+            data = f.read()
+            response = "HTTP/1.1 200 OK\r\n"
+            response += "Content-Type:text/html\r\n"
+            response += "Content-Length:%d\r\n" % len(data)
+            response += "\r\n"
+            response = response.encode() + data
+        finally:
+            # 发送响应给客户端
+            connfd.send(response)
 
+if __name__ == '__main__':
 
-
-
-
-
-
-
-def main():
     #实例化一个对象，需要客户传入信息 http地址
     httpd=WebSever(host='0.0.0.0',port=8888,
                    html="./static")#文件地址)
